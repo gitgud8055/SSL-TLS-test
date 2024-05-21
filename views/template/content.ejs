@@ -1,0 +1,26 @@
+<style>
+.main-page:hover, .list-class:hover {
+  background-color: #404244;
+}
+.main-content {
+  transition: width 0.3s ease-in-out;
+}
+</style>
+<div class="main-content h-svh bg-[#303132] sticky top-0" style="width: 260px;">
+  <button class="absolute left-[260px] top-0 h-14 w-14 bg-slate-500 " id="x-button"><ion-icon name="close-outline" style="font-size: 1.5rem;"></ion-icon></ion-icon></button>
+  <div class="px-1.5 py-3.5 w-full h-full">
+    <a class="main-page flex h-11 w-full gap-2 items-center rounded-3xl px-2" href="/" >
+      <div class="">
+        <img src="/source/image/meoden.png" alt="" class="h-10" style="border-radius: 50%;">
+      </div>
+      <div class="text-white">SSL</div>
+    </a>
+  </div>
+</div>
+<script>
+  $("#x-button").click(function() {
+    let cur = $(".main-content").first();
+    cur.css("width", "0px");
+    cur.css("visibility", "hidden");
+  });
+</script>

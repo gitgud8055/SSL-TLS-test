@@ -1,0 +1,31 @@
+#data-table tr:hover > td,
+#data-tableT tr:hover > td {
+    background-color: rgb(222, 226, 230);
+}
+
+#title-list ~ *,
+#addJaiuAjw ~ *,
+#date-list ~ *,
+#get-list ~ *,
+#set-list ~ *,
+#class-list ~ *,
+#learn-list ~ * {
+    display: none;
+}
+
+.RtkAjwQi {
+    transform: rotate(180deg);
+}
+
+.nbAMtUm1un {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 4; /* number of lines to show */
+            line-clamp: 4;
+    -webkit-box-orient: vertical;
+}
+
+.noted-v1:hover, .noted-v2:hover {
+    cursor: pointer;
+}

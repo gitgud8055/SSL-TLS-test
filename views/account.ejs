@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<head>
+	<%- include(root + '/views/template/header.ejs') %>
+</head>
+
+<body style="background-color:transparent; --border-black: 1px solid black;">
+  <div class="min-w-full h-full flex justify-center items-center flex-col gap-4">
+    <div class=" mt-4">
+      <span class="fs-4 fw-bold capitalize"><%- username %></span>
+    </div>
+    <div>
+      <img src= <%- link %> alt="" srcset="" class=" w-16 h-16 rounded-full">
+    </div>
+    <button class=" rounded-3xl p-2 fw-bold btn btn-info" style="border: var(--border-black);" id="management">
+      Quản lý thông tin cá nhân
+    </button>
+    <button class="btn btn-primary rounded-2xl fw-bold" style="border: var(--border-black);" id="pass">
+      Đổi mật khẩu
+    </button>
+    <button class="rounded-2xl p-2 fw-bold btn btn-danger" style="border: var(--border-black);" id="logout">
+      Đăng xuất
+    </button>
+  </div>
+  <script>
+    $("#management").click(function() {
+      parent.document.location.href = '/account';
+    });
+    $("#pass").click(function() {
+      console.log($(parent.document).find("#cp").eq(0).html());
+      $(parent.document).find("#triggerer").eq(0).click();
+    });
+    $("#logout").click(function() {
+      fetch('/api/logout', {method: "POST"})
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`);
+        }
+        return response.json();
+      }).then(data => {parent.document.location.href = data;});
+    })
+  </script>
+</body>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<head>
+	<%- include(root + '/views/template/header.ejs') %>
+  <link rel="stylesheet" href="/source/css/management.css">
+</head>
+
+<body>
+	<div class="flex h-full w-full bg-[#191920]">
+		<%- include(root + '/views/template/content.ejs') %> 
+		<div class=" h-full max-w-full flex-1">
+			<%- include(root + '/views/template/navbar.ejs') %>
+			<div class="h-full w-full flex flex-row mt-32 flex-wrap text-white" id="content">
+        <div class="h-full w-2/5 flex flex-col justify-center items-center leading-loose">
+          <div class=" h-24 w-24">
+              <img src= <%- link %> alt="" class=" rounded-full" style="border: 3px solid blue;" id="m-avatar">
+          </div>
+          <div class="fs-2 capitalize">
+            <%- username %>
+          </div>
+        </div>
+        <div class="h-full w-3/5 px-2">
+          <div class="table-responsive">
+            <table class="table table-dark">
+              <tbody id="profile" class=" leading-loose">
+
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+		</div>
+	</div>
+  <script>
+    function add(title, data, al, forced=false) {
+      $("#profile").append(`<tr data-alias="${al}">
+        <td class="fs-5">${title}</td>
+        <td class="fs-5">${data}</td>
+      </tr>`);
+    };
+    add("ID", "<%- id %>", "id", true);
+    add("Full name", "<%- name %>", "name");
+    add("Phone", "<%- phone_number %>", "phone_number");
+    add("Email", "<%- email %>", "email");
+    add("Chức danh", "<%- role %>", "role");
+    add("Công tác", "<%- position %>", "position");
+
+  </script>
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+	<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</body>

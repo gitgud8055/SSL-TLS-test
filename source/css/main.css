@@ -1,0 +1,30 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Google Sans","Helvetica Neue",sans-serif;
+}
+
+#detail {
+  padding: 2px;
+}
+
+.container {
+  border: 1px solid #000;
+  border-radius: 5px;
+  word-wrap: break-word;
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 4; /* number of lines to show */
+            line-clamp: 4;
+    -webkit-box-orient: vertical;
+  }
+  span:hover {
+    overflow-y: scroll;
+  }
+}
+
+#form-c > div {
+  margin-bottom: 0.5rem;
+}		

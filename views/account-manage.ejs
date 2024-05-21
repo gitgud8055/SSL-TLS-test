@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<head>
+	<%- include(root + '/views/template/header.ejs') %>
+  <link rel="stylesheet" href="/source/css/management.css">
+</head>
+
+<body>
+	<div class="flex h-full w-full bg-[#191920]">
+		<%- include(root + '/views/template/content.ejs') %> 
+		<div class=" h-full max-w-full flex-1">
+			<%- include(root + '/views/template/navbar.ejs') %>
+      <style>
+        #profile input[type="text"] {
+          background-color: black;
+        }
+      </style>
+			<div class="h-full w-full flex flex-row mt-32 flex-wrap flex-1 text-white" id="content">
+        <div class="h-full w-2/5 flex flex-col justify-center items-center leading-loose">
+          <div class=" h-24 w-24">
+            <form action="/api/update-profile" method="post" enctype="multipart/form-data" id="form">
+              <input type="file" id="fileInput" name="image" accept="image/*" style="display: none;">
+              <button type="button" onclick="document.getElementById('fileInput').click();" style="background-color: transparent; border: none;">
+                <img src= <%- link %> alt="" class=" rounded-full" style="border: 3px solid blue;" id="m-avatar">
+              </button>
+            </form>
+          </div>
+          <div class="fs-2 capitalize">
+            <%- username %>
+          </div>
+          <div>
+            Ấn vào để đổi ảnh đại diện
+          </div>
+        </div>
+        <div class="h-full w-3/5 px-2">
+          <div class="table-responsive">
+            <table class="table table-dark">
+              <tbody id="profile" class=" leading-loose">
+
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class=" w-full h-full flex ">
+          <button class="btn btn-success ml-auto mr-2" id="save">Save</button>
+        </div>
+      </div>
+		</div>
+	</div>
+  <script>
+    function add(title, data, al, forced=false) {
+      $("#profile").append(`<tr data-alias="${al}">
+        <td class="fs-5">${title}</td>
+        <td class="fs-5">${data}</td>
+        ${forced ? `<td></td></tr>` : `<td><button class="btn btn-dark"> <ion-icon name="pencil-outline"></ion-icon> </td> </button>`}
+      </tr>`);
+      let cur = $("#profile tr:last");
+      cur.find("button").click(function() {
+        let item = cur.find("td").eq(1);
+        if (item.children().length > 0) {
+          item.html(`${item.find("input").first().attr('data-default')}`);
+        }
+        else {
+          item.html(`<input type="text" class="w-full" value="${item.html()}" data-default="${item.html()}">`);
+        }
+      });
+    };
+    add("ID", "<%- id %>", "id", true);
+    add("Full name", "<%- name %>", "name");
+    add("Phone", "<%- phone_number %>", "phone_number");
+    add("Email", "<%- email %>", "email");
+    add("Chức danh", "<%- role %>", "role");
+    add("Công tác", "<%- position %>", "position");
+
+    var change = {};
+
+    document.getElementById('fileInput').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+                document.getElementById('m-avatar').src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        } else {
+          document.getElementById('m-avatar').src = "<%- link %>";
+        }
+    });
+    $("#save").click(async function() {
+      $("#profile tr").each(async function(i, item) {
+        let v = $(item).find("td");
+        if (v.eq(1).children().length > 0) {
+          change[$(item).attr('data-alias')] = v.find("input").first().val();
+        }
+        else {
+          delete change[$(item).attr('data-alias')];
+        }
+      });
+      //$("#data").val(await JSON.stringify(change));
+      //$("#form").submit();
+      const formData = new FormData(document.getElementById("form"));
+      formData.append("data", await JSON.stringify(change));
+      fetch('/api/update-profile', {
+        method: 'POST',
+        body: formData
+      }).then(response => {
+        if (!response.ok) {
+          throw new Error ("fuc");
+        }
+        return response.json();
+      }).then(data => {alert(data.message)});
+    });
+
+  </script>
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+	<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</body>

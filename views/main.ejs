@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<head>
+	<%- include(root + '/views/template/header.ejs') %>
+  	<link rel="stylesheet" href="/source/css/main.css">
+	<script src="/source/js/main.js"></script>
+</head>
+
+<body>
+	<div class="flex m-0  bg-[#191920] text-white">
+		<%- include(root + '/views/template/content.ejs') %> 
+		<div class=" h-full max-w-full flex-1">
+			<%- include(root + '/views/template/navbar.ejs') %>
+			<div class="flex-1 h-full w-full flex flex-col">
+				<div class="flex-1">
+				</div>
+				<div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+	<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</body>

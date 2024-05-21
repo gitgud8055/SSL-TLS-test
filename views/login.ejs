@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<head>
+	<%- include(root + '/views/template/header.ejs') %>
+  <link rel="stylesheet" href="/source/css/login.css">
+  <script src="/source/js/login.js"></script>
+</head>
+
+<body>
+  <div class="min-h-screen flex flex-col justify-center">
+    <div class="main-page flex flex-row flex-wrap p-3" style="border-radius: 28px; ">
+      <div class=" w-1/2">
+        <div class="h-20">
+          <img src="/source/image/meoden.png" alt="" class="h-12">
+        </div>
+        <div class=" text-4xl fw-bold">
+          Đăng nhập
+        </div>
+      </div>
+      <div class="w-1/2 relative">
+        <form>
+          <div class="form-group">
+            <span><ion-icon name="mail-outline"></ion-icon></span>
+            <input type="text" class="form-control" id="input-user" aria-describedby="emailHelp" placeholder="Username">
+            <small id="emailHelp" class="form-text text-muted invisible">abcxyz</small>
+          </div>
+          <div class="form-group">
+            <span><ion-icon name="lock-closed-outline"></ion-icon></span>
+            <input type="password" class="form-control" id="input-password" placeholder="Password">
+          </div>
+          <div class="form-group form-check" id="sp">
+            <input type="checkbox" class="form-check-input">
+            <label class="form-check-label" for="">Show password</label>
+          </div>
+        </form>
+      </div>
+      <div class="w-full flex flex-row-reverse items-center">
+        <button class="btn btn-primary rounded-3xl px-7" id="login-button">Login</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</body>

@@ -1,0 +1,115 @@
+<style>
+@media screen and (max-width: 512px) {
+  .navbar-toggle {
+    display: none;
+  }
+}
+#form-pass > div {
+  margin-bottom: 1rem;
+}
+</style>
+<nav class="navbar navbar-expand-lg navbar-light sticky top-0 text-white" style="z-index: 900;">
+  <div class="mr-auto flex flex-row items-center gap-2">
+    <div class="">
+      <button class="mx-3 flex items-center" id="content-tg">
+        <ion-icon name="menu-outline" style="font-size: 1.5rem;"></ion-icon>
+      </button>
+    </div>
+    <div class="navbar-toggle">
+      <span><%- title %></span>
+    </div>
+  </div>
+  <div class="mr-2 cursor-pointer">
+    <img src= <%- link %> alt="" srcset="" class=" w-12 h-12 rounded-full" id="avatar">
+  </div>
+  <div class="absolute top-0" id="account" style="display: none; z-index: 900; width: 436px; height: 630px; right: 0px; margin-top: 60px; margin-right: 24px; min-height: 210px; max-height: calc(-81px + 100dvh); max-width: calc(-8px + 100vw);">
+    <iframe src="/api/account" frameborder="0" class="w-full h-full bg-slate-200 rounded-3xl"></iframe>
+  </div>
+</nav>
+<div class=" fixed top-1/2 left-1/2 w-1/3 min-w-[438px] h-auto flex flex-col items-center rounded-md bg-[#cacedb] " style="transform: translate(-50%, -50%); border: 1px solid black; z-index: 999; display: none; " id="cp">
+    <div class="fw-bold fs-4 mt-2">Cập nhật mật khẩu của bạn</div>
+    <div class="fs-5">Nhập mật khẩu hiện tại và mật khẩu mới</div>
+    <div class="absolute top-0 right-0 off-pass" style="z-index: 899;">
+      <button class="btn btn-normal"><ion-icon name="close-outline"></ion-icon></button>
+    </div>
+    <form class="w-full px-4 mt-3" id="form-pass">
+      <div class="form-group">
+        <div>Mật khẩu hiện tại</div>
+        <input type="password" class="form-control" id="current" required>
+      </div>
+      <div class="form-group">
+        <div>Mật khẩu mới</div>
+        <input type="password" class="form-control" id="new" required>
+      </div>
+      <div class="form-group">
+        <div>Xác nhận mật khẩu mới</div>
+        <input type="password" class="form-control" id="check" required>
+      </div>
+    </form>
+    <div class="w-full flex flex-row-reverse py-3 pr-3 bg-[#b8bed1]">
+      <button class="btn btn-primary" id="submit-cp">Done</button>
+      <button class="btn btn-normal off-pass">Hủy bỏ</button>
+    </div>
+</div>
+<button class="hidden" onclick="toggleall()" id="triggerer"></button>
+<script>
+  $("#content-tg").click(function() {
+    let cur = $(".main-content").first();
+    let now = cur.css("width") === "0px";
+    console.log(cur.css("width"));
+    cur.css("width", now ? "260px" : "0px");
+    cur.css("visibility", now ? "visible" : "hidden");
+  });
+  media_query(`(max-width: 768px)`, function(x) {
+    console.log("true");
+    let cur = $(".main-content").first();
+    if (x.matches) {
+      cur.css("width", "0px");
+      cur.css("visibility", "hidden");
+      cur.css("position", "fixed");
+      cur.css("z-index", "949");
+      $("#x-button").show();
+    }
+    else {
+      cur.css("width", "260px");
+      cur.css("visibility", "visible");
+      cur.css("position", "");
+      cur.css("z-index", "");
+      $("#x-button").hide();
+    }
+  });
+
+  function togglecp() {
+    $("#cp").toggle();
+  }
+  function toggleall() {
+    $("#account").toggle();
+    togglecp();
+  }
+  $(".off-pass").click(function() {
+    togglecp();
+  })
+  $("#avatar").click(function() {
+    $("#account").toggle();
+  });
+  function kwjfiuwalkjfwo() {
+    const change = {};
+    $("#form-pass input").each(function(i, item) {
+      change[$(item).attr("id")] = $(item).val();
+    })
+    fetch('/api/change-pass', {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(change)})
+    .then(async function(response) {
+      if (!response.ok) {
+        let x = await response.json();
+        throw new Error(`Error: ${x.message}`);
+      }
+      return response.json();
+    }).then(data => {alert(data.message); window.location.reload();}).catch(err => {alert(err.message);});;
+  }
+  $("#submit-cp").click(kwjfiuwalkjfwo);
+  $("#form-pass input").keydown((event) => {
+    if (event.key === "Enter") kwjfiuwalkjfwo();
+  });
+  
+</script>
+<script src="/source/js/navbar.js"></script>
