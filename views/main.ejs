@@ -13,11 +13,21 @@
 			<div class="flex-1 h-full w-full flex flex-col">
 				<div class="flex-1">
 				</div>
-				<div>
+				<div class="">
 				</div>
 			</div>
 		</div>
 	</div>
+	<script src="/generator/test.js"></script>
+	<script>
+		window.onload = () => {
+			const text = "abc sdkjf";
+			const res = Module._add(new Uint8Array(text));
+			//const res = Module._Str();
+			console.log(res);
+			console.log(UTF8ToString(res));
+		};
+	</script>
 	<script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
 	<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 </body>

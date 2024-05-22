@@ -1,4 +1,14 @@
-#include <bits/stdc++.h>
+#include <iostream>
+#include<vector>
+#include<string>
+#include<random>
+#include<ctime>
+#include<chrono>
+#include <numeric>
+#include <algorithm>
+#include <functional>
+#include <cassert>
+#include<emscripten.h>
 
 using namespace std;
 
@@ -476,16 +486,27 @@ long long my_rand(long long l, long long r) {
 	return rng() % (r - l + 1) + l;
 }
 
-int main() {
+long long gcd(long long m, long long n) {
+	if (n != 0) {
+		long long t = m % n;
+		m = n;
+		n = t;
+	}
+	return m;
+}
+
+extern "C" {
+	EMSCRIPTEN_KEEPALIVE
+void execute(const char* command, long long exp=0, long long N=0) {
 	ios::sync_with_stdio(0);
 	cin.tie(0);
-	string base = "9clVP6DXoOnYLeEsrHFxtWSCUN0M871BAbyQpjidaIqu34hJ2GvTmKgkw5Rf+-*/";
+	string base = "ber8NYQyORoL5M9uAGxs0TmpEVjlDvCBUai4IfW32zXSJwkgcnHKqZ17dPhtF6+/";
 	vector<int> pos(256);
 	for (int i = 0; i < (int) base.size(); i++) pos[base[i]] = i;
 	string input;
 	long long n, m, e, d, p, q;
-	string cmd;
-	cin >> cmd;
+	string cmd(command);
+  cout << cmd << endl;
 	if (cmd == "create") {
 		p = 0; q = 0;
 		while (!IsPrime(p)) {
@@ -497,7 +518,7 @@ int main() {
 		n = p * q;
 		m = (p - 1) * (q - 1);
 		e = 0;
-		while (__gcd(e, m) != 1) {
+		while (gcd(e, m) != 1) {
 			e = my_rand(2, m - 1);
 		}
 		md = m;
@@ -507,7 +528,8 @@ int main() {
 	else if (cmd == "encrypt") {
 		string s;
 		input = "";
-		cin >> e >> n;
+		e = exp;
+		n = N;
 		md = n;
 		while (getline(cin, s)) {
 			if (!input.empty()) input += "\n";
@@ -516,7 +538,7 @@ int main() {
 		string res = "";
 		for (int i = 0; i < (int) input.size(); i += 7) {
 			long long now = 0;
-			string cur = input.substr(i, i + 7);
+			string cur = input.substr(i, 7);
 			for (auto&c : cur) {
 				now = now * 256 + c;
 			}
@@ -526,23 +548,25 @@ int main() {
 				dfs(x / 64, cnt - 1);
 				res += base[x % 64];
 			};
-			dfs(now, 28);
+			dfs(now, 11);
 		} 
 		cout << res;
 	}
 	else if (cmd == "decrypt") {
 		string s;
 		input = "";
-		cin >> d >> n;
+		d = exp;
+		n = N;
 		md = n;
 		while (getline(cin, s)) {
 			if (!input.empty()) input += "\n";
 			input += s;
 		}
 		string res = "";
-		for (int i = 0; i < (int) input.size(); i += 28) {
+		for (int i = 0; i < (int) input.size(); i += 11) {
 			long long now = 0;
-			for (auto&c : input.substr(i, i + 28)) {
+			string cur = input.substr(i, 11);
+			for (auto&c : cur) {
 				now = now * 64 + pos[c];
 			}
 			now = power((Mint)now, d)();
@@ -551,8 +575,9 @@ int main() {
 				dfs(x / 256, cnt - 1);
 				res += char(x % 256);
 			};
-			dfs(now, 28);
+			dfs(now, 7);
 		} 
 		cout << res;
 	}
+}
 }
