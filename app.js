@@ -137,10 +137,29 @@ app.get('/api/account', log_authorize, function(req, res) {
 app.post('/api/trade', log_authorize, async function(req, res) {
   const data = req.body;
   if (!data || !data.n || !data.e) {
-    return res.status(500).json({message: "Thiếu thông tin"});
+    return res.status(404).send("Thiếu thông tin");
   }
   if (req.session.key in KeyRSA) {
-    return res.status(500).json();
+    if (KeyRSA[req.session.key]) {
+      let infor;
+      await new Promise(async (res, rej) => {
+        var runner = spawn('./generator/rsa_be');
+        runner.stdin.write("encrypt\n");
+        runner.stdin.write(`${data.e} ${data.n}\n`);
+        let x = JSON.stringify({rec: KeyRSA[req.session.key].send, send: {n: KeyRSA[req.session.key].rec.n, e: KeyRSA[req.session.key].rec.e}});
+        runner.stdin.write(x);
+        runner.stdin.end();
+        runner.stdout.on('data', (data) => {
+          infor = data.toString();
+          console.log(infor);
+          res();
+        });
+      });
+      return res.status(500).send(infor);
+    }
+    else {
+      return res.status(404).send("Có lỗi phát sinh");
+    }
   }
   try {
     KeyRSA[req.session.key] = {send: data};
@@ -172,7 +191,34 @@ app.post('/api/trade', log_authorize, async function(req, res) {
     res.send(infor);
   }
   catch (e) {
-    res.status(500).json({message: "Không hợp lệ"});
+    res.status(404).send("có lỗi phát sinh");
+  }
+});
+
+app.post('/api/trade-v2', log_authorize, async function(req, res) {
+  if (!req.body || !req.body.data) {
+    return res.status(404).send("Thiếu thông tin");
+  }
+  try {
+    let data = req.body.data;
+    let infor;
+    await new Promise(async (res, rej) => {
+      var runner = spawn('./generator/rsa_be');
+      runner.stdin.write("decrypt\n");
+      runner.stdin.write(`${KeyRSA[req.session.key].rec.d} ${KeyRSA[req.session.key].rec.n}\n`);
+      runner.stdin.write(data);
+      runner.stdin.end();
+      runner.stdout.on('data', (data) => {
+        infor = data.toString();
+        console.log(infor);
+        res();
+      });
+    });
+    KeyRSA[req.session.key].send = await JSON.parse(infor);
+    res.status("Thành công");
+  }
+  catch (er) {
+    res.status(404).send("Có lỗi phát sinh");
   }
 });
 

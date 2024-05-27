@@ -60,7 +60,16 @@
 			})
 			.then(async (response) => {
 				if (!response.ok) {
-					throw new Error ("Verified");
+					if (response.status === 404) {
+						throw new Error(await response.text());
+					}
+					else {
+						let text = await response.text();
+						let json_data = await rsa("decrypt", text, keyRSA.rec.d, keyRSA.rec.n);
+						let data = await JSON.parse(json_data);
+						keyRSA = data;
+						throw new Error("Verified");
+					}
 				}
 				let text = await response.text();
 				console.log(text);
@@ -71,7 +80,31 @@
 			}).then(async (data) => {
 				keyRSA.send = data;
 				console.log(keyRSA);
-			}).catch(e => {
+			}).then(async () => {
+
+				console.log("exchange");
+				let text = await rsa("encrypt", await JSON.stringify(keyRSA.rec), keyRSA.send.e, keyRSA.send.n);
+
+				fetch('/api/trade-v2', {
+					method: "POST",
+					headers: {
+						"Content-Type": "application-json"
+					},
+					body: JSON.parse({data: text})
+				}).then(async(response) => {
+					if (!response.ok) {
+						throw new Error("Error");
+					}
+					let text = await response.text();
+					return rsa("decrypt", text, keyRSA.rec.d, keyRSA.rec.n);
+				}).then(data => {
+					console.log(data);
+				}).catch(err => {
+					console.log(err.message);
+				});
+
+			})
+			.catch(e => {
 				console.log(e.message);
 			});
 		};
