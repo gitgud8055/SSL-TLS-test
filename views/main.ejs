@@ -6,27 +6,91 @@
 </head>
 
 <body>
-	<div class="flex m-0  bg-[#191920] text-white">
+	<div class="flex h-full w-full bg-[#191920] text-white">
 		<%- include(root + '/views/template/content.ejs') %> 
 		<div class=" h-full max-w-full flex-1">
 			<%- include(root + '/views/template/navbar.ejs') %>
 			<div class="flex-1 h-full w-full flex flex-col">
 				<div class="flex-1">
+					<input type="text" id="abc" class="text-black">
+					<button type="" class="btn btn-primary" id="sm">Done</button>
 				</div>
 				<div class="">
 				</div>
 			</div>
 		</div>
 	</div>
-	<script src="/generator/test.js"></script>
+	<script src="/generator/rsa.js"></script>
 	<script>
-		window.onload = () => {
-			const text = "abc sdkjf";
-			const res = Module._add(new Uint8Array(text));
-			//const res = Module._Str();
+		function rsa(cmd, text = "", p=0, q=0) {
+			stringToAscii(cmd + '\0' + text, 0);
+			//stringToAscii(text, cmd.length + 1);
+			//console.log(cmd, text, p, q);
+			return UTF8ToString(Module._execute(cmd, text, p.toString(), q.toString()));
+		}
+		var keyRSA = {};
+		window.onload = async () => {
+
+			fetch('https://api.ipify.org?format=json')
+		.then(response => response.json())
+		.then(data => {
+			console.log('Your Public IP Address:', data.ip);
+		})
+		.catch(error => {
+			console.error('Error fetching IP:', error);
+		});
+			
+			const res = await JSON.parse(rsa("create"));
+			keyRSA.rec = res;
 			console.log(res);
-			console.log(UTF8ToString(res));
+
+			/*const text = "bulul hoc sinh";
+			const encrypt = await rsa("encrypt", text, res.e, res.n);
+			console.log("done ", encrypt);
+
+			const decrypt = await rsa("decrypt", encrypt, res.d, res.n);
+			console.log("done ", decrypt);*/
+
+			await fetch('/api/trade', {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify({n: keyRSA.rec.n, e: keyRSA.rec.e})
+			})
+			.then(async (response) => {
+				if (!response.ok) {
+					throw new Error ("Verified");
+				}
+				let text = await response.text();
+				console.log(text);
+				return rsa("decrypt", text, keyRSA.rec.d, keyRSA.rec.n);
+			}).then((data) => {
+				console.log(data);
+				return JSON.parse(data);
+			}).then(async (data) => {
+				keyRSA.send = data;
+				console.log(keyRSA);
+			}).catch(e => {
+				console.log(e.message);
+			});
 		};
+	</script>
+	<script>
+		async function send_message(text) {
+			var cur = await rsa("encrypt", text, keyRSA.send.e, keyRSA.send.n);
+			console.log(cur);
+			await fetch('/api/messages', {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify({content: cur})
+			});
+		}
+		$("#sm").click(function() {
+			send_message($("#abc").val());
+		});
 	</script>
 	<script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
 	<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>

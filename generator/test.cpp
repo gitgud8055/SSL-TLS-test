@@ -13,11 +13,11 @@ extern "C" {
     }
     EMSCRIPTEN_KEEPALIVE
     const char* Str() {
-        return "askfj lkj";
+        string s = "askfj lkj";
+        return s.c_str();
     }
     EMSCRIPTEN_KEEPALIVE
-    void add(emscripten::val_array a) {
-        int res = a.as<int> ();
-        cout << res << endl;
+    void add(long long x) {
+        cout << x << endl;
     }
 }

@@ -15,7 +15,7 @@ const { error, log } = require('console');
 
 const ui = require('./module/upload-image');
 const uf = require('./module/upload-file');
-const {deleteFile} = require('./module/delete-uploaded')
+const {deleteFile} = require('./module/delete-uploaded');
 
 app.use(parser.urlencoded({extended: true}));
 app.use(parser.json());
@@ -118,7 +118,10 @@ app.post('/api/login', async function(req, res) {
   }
 });
 
+const KeyRSA = {};
+
 app.post('/api/logout', function(req, res) {
+  delete KeyRSA[req.session.key];
   req.session.destroy((err) => {
     if (err) {
       console.log(`Logout error: ${err.message}`);
@@ -129,6 +132,70 @@ app.post('/api/logout', function(req, res) {
 
 app.get('/api/account', log_authorize, function(req, res) {
   res.render(`${__dirname}/views/account.ejs`, {root: __dirname, username: req.session.username, link: `/source/image/${req.session.avatar}`});
+});
+
+app.post('/api/trade', log_authorize, async function(req, res) {
+  const data = req.body;
+  if (!data || !data.n || !data.e) {
+    return res.status(500).json({message: "Thiếu thông tin"});
+  }
+  if (req.session.key in KeyRSA) {
+    return res.status(500).json();
+  }
+  try {
+    KeyRSA[req.session.key] = {send: data};
+    await new Promise((res, rej) => {
+      var runner = spawn('./generator/rsa_be');
+      runner.stdin.write("create");
+      runner.stdin.end();
+      runner.stdout.on('data', (data) => {
+        KeyRSA[req.session.key].rec = JSON.parse(data.toString());
+        res();
+      });
+    });
+    let infor;
+    await new Promise(async (res, rej) => {
+      var runner = spawn('./generator/rsa_be');
+      runner.stdin.write("encrypt\n");
+      runner.stdin.write(`${KeyRSA[req.session.key].send.e} ${KeyRSA[req.session.key].send.n}\n`);
+      let x = JSON.stringify({n: KeyRSA[req.session.key].rec.n, e: KeyRSA[req.session.key].rec.e});
+      console.log(x);
+      runner.stdin.write(x);
+      runner.stdin.end();
+      runner.stdout.on('data', (data) => {
+        infor = data.toString();
+        console.log(infor);
+        res();
+      });
+    });
+    console.log(KeyRSA[req.session.key]);
+    res.send(infor);
+  }
+  catch (e) {
+    res.status(500).json({message: "Không hợp lệ"});
+  }
+});
+
+app.post('/api/messages', log_authorize, async function(req, res) {
+  if (!req.body) return res.status(404).json();
+  const data = req.body.content;
+  try {
+    await new Promise(async (res, rej) => {
+      var runner = spawn('./generator/rsa_be');
+      runner.stdin.write("decrypt\n");
+      runner.stdin.write(`${KeyRSA[req.session.key].rec.d} ${KeyRSA[req.session.key].rec.n}\n`);
+      runner.stdin.write(data);
+      runner.stdin.end();
+      runner.stdout.on('data', (data) => {
+        infor = data.toString();
+        console.log(infor);
+        res();
+      });
+    });
+    res.json({message: "123"});
+  } catch (e) {
+    res.status(500).json({message: "Error"});
+  }
 });
 
 app.post('/api/change-password', log_authorize, function(req, res, next) {
@@ -156,33 +223,6 @@ app.post('/api/change-password', log_authorize, function(req, res, next) {
 
 app.get('/api/download', log_authorize, function(req, res) {
   return res.download(`./user-file/${req.query.l}`, req.query.n);
-  const data = req.params.url;
-  const idx = req.query.id;
-  db.serialize(async function() {
-    try {
-      await new Promise((res, rej) => {
-        db.all(`select id from calendar where mid = ?`, [data.id], (e, rows) => {
-          if (e || rows.length !== 1 || rows[0].id !== req.session.key) {
-            console.error(e.message);
-            rej("Invalid");
-          }
-          res();
-        });
-      });
-      await new Promise((suc, rej) => {
-        db.all(`select pathname as name, url as path from filedata where id = ?`, [data], (e, rows) => {
-          if (e) {
-            console.error(e.message);
-            rej("Lỗi database");
-          }
-          res.json({data: rows});
-          suc();
-        });
-      });
-    } catch (err) {
-      res.status(507).json({message: err});
-    }
-  });
 });
 
 const convert = {'name': 'name', 'phone_number': 'phone', 'email': 'email', 'role': 'role', 'position': 'pos'};

@@ -8,8 +8,6 @@
 #include <algorithm>
 #include <functional>
 #include <cassert>
-#include <emscripten/emscripten.h>
-#include <emscripten/val.h>
 
 using namespace std;
 
@@ -497,16 +495,13 @@ long long gcd(long long m, long long n) {
 }
 char buffer[1 << 10];
 
-extern "C" {
-	EMSCRIPTEN_KEEPALIVE
-const char* execute(const char* command, const char* text=NULL, long long exp=0, long long N=0) {
+string execute(string command, string text=NULL, long long exp=0, long long N=0) {
 	string base = "ber8NYQyORoL5M9uAGxs0TmpEVjlDvCBUai4IfW32zXSJwkgcnHKqZ17dPhtF6+/";
 	vector<int> pos(256);
 	for (int i = 0; i < (int) base.size(); i++) pos[base[i]] = i;
 	string input;
 	long long n, m, e, d, p, q;
 	string cmd(command);
-  text = command + cmd.size() + 1;
   //cout << &command << " " << &text << "|" << command <<"|" << text << endl;
 	if (cmd == "create") {
 		p = 0; q = 0;
@@ -533,7 +528,6 @@ const char* execute(const char* command, const char* text=NULL, long long exp=0,
 		e = exp;
 		n = N;
 		md = n;
-    cout << endl;
 		string res = "";
 		for (int i = 0; i < (int) input.size(); i += 7) {
 			long long now = 0;
@@ -549,7 +543,7 @@ const char* execute(const char* command, const char* text=NULL, long long exp=0,
 			};
 			dfs(now, 11);
 		} 
-		return res.c_str();
+		return res;
 	}
 	else if (cmd == "decrypt") {
 		input = (string) text;
@@ -571,8 +565,23 @@ const char* execute(const char* command, const char* text=NULL, long long exp=0,
 			};
 			dfs(now, 7);
 		} 
-		return res.c_str();
+		return res;
 	}
   return "";
 }
+
+int main() {
+  string a, b;
+  long long c, d;
+  cin >> a;
+  if (a != "create") {
+    cin >> c >> d;
+    string input;
+    b = "";
+    while (getline(cin, input)) {
+      if (!b.empty()) input += "\n";
+      b += input;
+    }
+  }
+  cout << execute(a, b, c, d);
 }
