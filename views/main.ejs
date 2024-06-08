@@ -8,20 +8,156 @@
 <body>
 	<div class="flex h-full w-full bg-[#191920] text-white">
 		<%- include(root + '/views/template/content.ejs') %> 
-		<div class=" h-full max-w-full flex-1">
+		<div class=" h-full max-w-full flex-1 flex flex-col">
 			<%- include(root + '/views/template/navbar.ejs') %>
-			<div class="flex-1 h-full w-full flex flex-col">
+			<div class="flex-1 flex flex-col">
 				<div class="flex-1">
-					<input type="text" id="abc" class="text-black">
-					<button type="" class="btn btn-primary" id="sm">Done</button>
+
 				</div>
-				<div class="">
+				<div class=" px-6 w-full">
+					<div class=" mx-auto">
+						<div class=" bg-[#2f2f2f] flex-1 rounded-full px-6 flex items-center gap-3 h-12 py-2.5">
+							<input type="text" id="abc" class=" bg-inherit flex-1 outline-none">
+							<button type="button" id="sm" class="flex items-center"><ion-icon name="paper-plane-outline" class=" text-xl"></ion-icon></button>
+						</div>
+					</div>
 				</div>
+				<div class=" invisible">a</div>
 			</div>
 		</div>
 	</div>
 	<script src="/generator/rsa.js"></script>
+	<script src="/source/js/cipher.js"></script>
 	<script>
+		function br() {
+			console.log("".padEnd(32, "-"));
+		}
+		var ClientRandom = crypto.getRandomValues(new Uint8Array(32));
+		var ServerRandom, RSAkey, preMasterSecret, masterSecret, secret;
+		window.onload = async function () {
+			const LuiAkwf = {
+				"Version": "TLS 1.3",
+				"Client time": new Date(),
+				"Random": Array.from(ClientRandom)
+			};
+			console.log("Sent (Client Hello): ", LuiAkwf);
+			br();
+			await fetch('/api/hello', {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify(LuiAkwf)
+			})
+			.then(async response => {
+				if (!response.ok) {
+					throw new Error(await response.json());
+				}
+				return response.json();
+			})
+			.then(async data => {
+				console.log("Received (Server Hello): ", data);
+				ServerRandom = new Uint8Array(data["Random"]);
+				let cert = data["SSL Certificate"];
+				RSAkey = await crypto.subtle.importKey(
+					"jwk",
+					cert,
+					{
+						name: "RSA-OAEP",
+						modulusLength: 2048, 
+						publicExponent: new Uint8Array([1, 0, 1]), // 65537
+						hash: "SHA-256" 
+					},
+					cert.ext,
+					cert.key_ops
+				);
+				console.log("Public RSA key: ", cert);
+				br();
+			})
+			.catch(err => {
+				console.log(err);
+				fetch('/api/logout', {method: "POST"})
+				.then(response => {
+					if (!response.ok) {
+						throw new Error(`Error: ${response.status}`);
+					}
+					return response.json();
+				}).then(data => {document.location.href = data;});
+			});
+			preMasterSecret = crypto.getRandomValues(new Uint8Array(48));
+			masterSecret = await PRF(preMasterSecret, ClientRandom, ServerRandom, 32);
+			secret = await PRF(masterSecret, ClientRandom, ServerRandom);
+
+			let data = JSON.stringify(Array.from(preMasterSecret));
+			let send = await encryptRSA(data , RSAkey);
+
+			const PwuiUj = Array.from(new Uint8Array(send));
+			console.log("Sent pre-master key: ", PwuiUj);
+			br();
+
+			await fetch('/api/hello-v2', {
+				method: "POST", 
+				headers: {
+					"Content-Type" : "application/json"
+				},
+				body: JSON.stringify(PwuiUj)
+			})
+			.then(async response=> {
+				if (!response.ok) {
+					throw new Error(await response.json());
+				}
+				return response.json();
+			})
+			.then(data => {
+				console.log(data);
+			}).catch(err => {
+				alert(err);
+			});
+
+			masterSecret = await initAES(masterSecret);
+			secret = await initMAC(secret);
+			console.log("pre-master secret: ", preMasterSecret);
+			console.log("master secret: ", await crypto.subtle.exportKey('jwk', masterSecret));
+			br();
+
+		};
+		/*
+		(async () => {
+			/*const keyPair = await initRSA();
+			const message = "This is a secret message";
+
+			const ciphertext = await encryptRSA(message, keyPair.publicKey);
+			console.log("Ciphertext:", new Uint8Array(ciphertext));
+
+			const decryptedMessage = await decryptRSA(ciphertext, keyPair.privateKey);
+			console.log("Decrypted message:", decryptedMessage);*/
+			/*const key = await initMAC('secret key');
+			console.log(key);
+
+			const message = " LKJDF LKJE FIOEU ELK JD";
+			const MAC = await getMAC(message, key);
+
+			const verify = await checkMAC(message, MAC, key);
+			console.log(verify);
+			/*const preMasterSecret = crypto.getRandomValues(new Uint8Array(48));
+			const ClientRandom = crypto.getRandomValues(new Uint8Array(32));
+			const serverRandom = crypto.getRandomValues(new Uint8Array(32));
+
+			const masterSecret = await PRF(preMasterSecret, ClientRandom, serverRandom);
+			console.log(masterSecret);
+		})();*/
+		
+		/*(async () => {
+			const [key, iv] = await initAES();
+			const message = "H sdf sdf";
+			const encrypted = await encryptAES(message, key, iv);
+			console.log(new Uint8Array(encrypted));
+		
+			const decrypted = await decryptAES(encrypted, key, iv);
+			console.log(decrypted);
+		})();*/
+	</script>
+	<script type="application/json">
 		function rsa(cmd, text = "", p=0, q=0) {
 			stringToAscii(cmd + '\0' + text, 0);
 			//stringToAscii(text, cmd.length + 1);
@@ -44,7 +180,7 @@
 			keyRSA.rec = res;
 			console.log(res);
 
-			/*const text = "bulul hoc sinh";
+			/*const text = " hoc sinh";
 			const encrypt = await rsa("encrypt", text, res.e, res.n);
 			console.log("done ", encrypt);
 
@@ -111,18 +247,31 @@
 	</script>
 	<script>
 		async function send_message(text) {
-			var cur = await rsa("encrypt", text, keyRSA.send.e, keyRSA.send.n);
-			console.log(cur);
+			let validator = await getMAC(text, secret);
+			let obj = {
+				content: text,
+				validator: Array.from(new Int8Array(validator))
+			};
+			let cur = await encryptAES(JSON.stringify(obj), masterSecret, new Uint8Array(12));
+			console.log("HMAC: ", validator);
+			console.log("Sent encrypted: ", Array.from(new Int8Array(cur)));
+			br();
+			//var cur = await rsa("encrypt", text, keyRSA.send.e, keyRSA.send.n);
 			await fetch('/api/messages', {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json"
 				},
-				body: JSON.stringify({content: cur})
+				body: JSON.stringify(Array.from(new Int8Array(cur)))
 			});
 		}
 		$("#sm").click(function() {
 			send_message($("#abc").val());
+		});
+		$("#abc").keydown(function(event) {
+			if (event.key === "Enter") {
+				send_message($(this).val());
+			}
 		});
 	</script>
 	<script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>

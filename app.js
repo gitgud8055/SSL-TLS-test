@@ -17,6 +17,9 @@ const ui = require('./module/upload-image');
 const uf = require('./module/upload-file');
 const {deleteFile} = require('./module/delete-uploaded');
 
+const cipher = require('./source/js/cipher');
+const crypto = require('crypto');
+
 app.use(parser.urlencoded({extended: true}));
 app.use(parser.json());
 app.use(session({
@@ -119,8 +122,9 @@ app.post('/api/login', async function(req, res) {
 });
 
 const KeyRSA = {};
+const userData = {};
 
-app.post('/api/logout', function(req, res) {
+function logout(req, res) {
   delete KeyRSA[req.session.key];
   req.session.destroy((err) => {
     if (err) {
@@ -128,10 +132,71 @@ app.post('/api/logout', function(req, res) {
     }
     res.json('/login');
   });
-});
+}
+
+app.post('/api/logout', logout);
 
 app.get('/api/account', log_authorize, function(req, res) {
   res.render(`${__dirname}/views/account.ejs`, {root: __dirname, username: req.session.username, link: `/source/image/${req.session.avatar}`});
+});
+
+function br() {
+  console.log("");
+  console.log("".padEnd(32, "-"));
+}
+
+app.post('/api/hello', log_authorize, async function(req, res) {
+  const data = req.body;
+  console.log("Received (Client Hello): ", data);
+  br();
+  if (!data || !("Version" in data) || !("Client time" in data) || !("Random" in data)) {
+    return res.status(400).send("Thiếu thông tin");
+  }
+  if (data["Version"] !== "TLS 1.3") {
+    return res.status(400).send("Phiên bản không hỗ trợ");
+  }
+  if (Date.parse(data["Client Time"]) < 0) {
+    return res.status(400).send("Ngày không hợp lệ");
+  }
+  if (data["Random"].length !== 32) {
+    return res.status(400).send("Mã random không hợp lệ");
+  }
+
+  const key = await cipher.initRSA();
+  userData[req.session.key] = {
+    "Client Random": new Uint8Array(data["Random"]), 
+    "Server Random": crypto.getRandomValues(new Uint8Array(32)),
+    "RSApublic": key.publicKey,
+    "RSAprivate": key.privateKey
+  };
+
+  const LiuwJachH = {
+    "Version": "TLS 1.3",
+    "Client time": new Date(),
+    "Random": Array.from(userData[req.session.key]["Server Random"]),
+    "SSL Certificate": await crypto.subtle.exportKey('jwk', userData[req.session.key]["RSApublic"])
+  };
+  console.log("Sent (Server Hello): ", LiuwJachH);
+  br();
+
+  return res.json(LiuwJachH);
+});
+
+app.post('/api/hello-v2', log_authorize, async function(req, res) {
+  if (!req.body) {
+    return res.status(400).json();
+  }
+  console.log("Received (pre-master secret): ", req.body);
+  const sender = (new Uint8Array(req.body)).buffer;
+  let cur = userData[req.session.key];
+  const data = new Uint8Array(JSON.parse(await cipher.decryptRSA(sender, cur["RSAprivate"])));
+  cur.masterSecret = await cipher.PRF(data, cur["Client Random"], cur["Server Random"], 32);
+  cur.secret = await cipher.PRF(cur.masterSecret, cur["Client Random"], cur["Server Random"]);
+  cur.masterSecret = await cipher.initAES(cur.masterSecret);
+  cur.secret = await cipher.initMAC(cur.secret);
+  console.log("master secret: ", await crypto.subtle.exportKey('jwk', cur.masterSecret));
+  br();
+  res.json("success");
 });
 
 app.post('/api/trade', log_authorize, async function(req, res) {
@@ -224,23 +289,17 @@ app.post('/api/trade-v2', log_authorize, async function(req, res) {
 
 app.post('/api/messages', log_authorize, async function(req, res) {
   if (!req.body) return res.status(404).json();
-  const data = req.body.content;
   try {
-    await new Promise(async (res, rej) => {
-      var runner = spawn('./generator/rsa_be');
-      runner.stdin.write("decrypt\n");
-      runner.stdin.write(`${KeyRSA[req.session.key].rec.d} ${KeyRSA[req.session.key].rec.n}\n`);
-      runner.stdin.write(data);
-      runner.stdin.end();
-      runner.stdout.on('data', (data) => {
-        infor = data.toString();
-        console.log(infor);
-        res();
-      });
-    });
-    res.json({message: "123"});
+    const data = JSON.parse(await cipher.decryptAES((new Uint8Array(req.body)).buffer, userData[req.session.key].masterSecret, new Uint8Array(12)));
+    console.log("Received encrypted: ", req.body);
+    console.log(data);
+    br();
+    if (!cipher.checkMAC(data.content, (new Uint8Array(data.validator)).buffer, userData[req.session.key].secret)) {
+      throw new Error ("Thông điệp đã bị chỉnh sửa");
+    }
+    res.json({message: ""});
   } catch (e) {
-    res.status(500).json({message: "Error"});
+    res.status(500).json({message: e});
   }
 });
 
